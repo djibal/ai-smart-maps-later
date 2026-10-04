@@ -1,0 +1,8 @@
+[package]
+name = "ai-smart-maps-later"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Canary, mesh rules, and the network contract. Outside the routing core."
+
+[dependencies]

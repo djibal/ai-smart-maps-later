@@ -5,5 +5,6 @@
 
 pub mod aggregation;
 pub mod canary;
+pub mod local_update;
 pub mod mesh;
 pub mod network;

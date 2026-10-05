@@ -98,6 +98,7 @@ fn the_cache_key_is_three_ids_and_a_slow_sync_is_not_applied() {
 fn later_sources_name_no_person() {
     for name in [
         "src/canary.rs",
+        "src/local_update.rs",
         "src/mesh.rs",
         "src/network.rs",
         "src/lib.rs",

@@ -49,7 +49,7 @@ dependencies = [
 [[package]]
 name = "ai-smart-maps-core"
 version = "0.1.0"
-source = "git+https://github.com/djibal/ai-smart-maps-core?rev=7054468#705446816f932608da533aa253db61c71068ec29"
+source = "git+https://github.com/djibal/ai-smart-maps-core?rev=306e572#306e57209f47559b5caab59c28424f716a4c6035"
 dependencies = [
  "aes-gcm",
  "base64",

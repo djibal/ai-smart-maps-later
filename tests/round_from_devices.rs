@@ -186,3 +186,21 @@ fn too_few_device_uploads_fail_the_round_and_the_active_scorer_stays() {
     );
     assert_eq!(active.weights, Weights::seeded(0).0);
 }
+
+#[test]
+fn a_restored_opted_in_device_still_produces_a_delta() {
+    let mut device = device(1, true);
+    let weights = Weights::seeded(0);
+    let first = upload(&mut device, &weights).expect("opted in before save");
+    let blob = device.export_all().unwrap();
+
+    let mut restored = Device::open(&[1u8; 32], &[0u8; 32]).unwrap();
+    restored.import_all(&blob).unwrap();
+    assert!(restored.training().opted_in());
+    assert_eq!(
+        restored.training().pairs().len(),
+        device.training().pairs().len()
+    );
+    let again = upload(&mut restored, &weights).expect("opt-in and pairs travel in the blob");
+    assert_eq!(again.delta, first.delta);
+}

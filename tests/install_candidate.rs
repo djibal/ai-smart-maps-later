@@ -8,6 +8,7 @@ use ai_smart_maps_core::device::{Device, Trip};
 use ai_smart_maps_core::graph::{Constraint, Edge, Graph, Node, Source};
 use ai_smart_maps_core::snap::Destination;
 use ai_smart_maps_core::tiles::Origin;
+use ai_smart_maps_core::training::TrainingPair;
 use ai_smart_maps_later::aggregation::{ActiveScorer, Method, Round, RoundError, Upload};
 use ai_smart_maps_later::artifact::encode_device_scorer;
 use ai_smart_maps_later::local_update::{local_update, score, Pair, Weights, PARAMETERS};
@@ -115,7 +116,7 @@ fn encoded_weights_score_the_same_on_the_host_as_the_local_forward() {
     let prediction = outcome.prediction.unwrap();
     let expected = score(&weights, &[1.0, 4.0, 0.0, 1.0]).unwrap();
     assert!(
-        (prediction.value as f32 - expected).abs() < 1e-4,
+        (prediction.value - expected).abs() < 1e-4,
         "host {} local {expected}",
         prediction.value
     );
@@ -185,4 +186,55 @@ fn a_failed_round_leaves_the_installed_artifact_unchanged() {
         .unwrap();
     assert_eq!(after.route.model_version_id, PREVIOUS_ID);
     assert_eq!(after.prediction.unwrap().value, installed);
+}
+
+fn to_pair(pair: &TrainingPair) -> Pair {
+    let features = |f: &ai_smart_maps_core::scorer::Features| {
+        [
+            f.edge_count as f32,
+            f.weight_sum as f32,
+            f.hazard_sum as f32,
+            f.hazard_missing as f32,
+        ]
+    };
+    Pair {
+        left: features(&pair.left),
+        right: features(&pair.right),
+        left_has_lower_cost: pair.left_has_lower_cost,
+    }
+}
+
+#[test]
+fn one_device_collects_pairs_updates_encodes_and_installs() {
+    let mut device = device_on(PREVIOUS, PREVIOUS_ID, None);
+    device.training().opt_in(PREVIOUS_ID);
+    device
+        .route("a", Destination::NodeId("c"), &trip())
+        .unwrap();
+    let pairs: Vec<Pair> = device.training().pairs().iter().map(to_pair).collect();
+    assert_eq!(pairs.len(), 1);
+
+    let start = Weights::seeded(0);
+    let delta = local_update(&start, &pairs).unwrap();
+    let stepped = Weights(
+        start
+            .0
+            .iter()
+            .zip(&delta)
+            .map(|(weight, step)| weight + step)
+            .collect(),
+    );
+    let bytes = encode_device_scorer(&stepped).unwrap();
+
+    device.install_scorer(&record(CANDIDATE_ID, Some(PREVIOUS_ID)), &bytes);
+    let after = device
+        .route("a", Destination::NodeId("c"), &trip())
+        .unwrap();
+    assert_eq!(after.route.model_version_id, CANDIDATE_ID);
+    let host = after.prediction.unwrap().value;
+    let expected = score(&stepped, &[1.0, 4.0, 0.0, 1.0]).unwrap();
+    assert!(
+        (host - expected).abs() < 1e-4,
+        "host {host} local {expected}"
+    );
 }

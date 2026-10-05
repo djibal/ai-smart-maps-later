@@ -9,5 +9,5 @@ description = "Canary, mesh rules, and the network contract. Outside the routing
 
 [dev-dependencies]
 # The core is a test dependency only: the canary decides, the core routes.
-# Pinned to the commit that exposed mid-trip reroute on the shell adapter.
-ai-smart-maps-core = { git = "https://github.com/djibal/ai-smart-maps-core", rev = "306e572" }
+# Pinned to the commit that drops the route cache on install_scorer.
+ai-smart-maps-core = { git = "https://github.com/djibal/ai-smart-maps-core", rev = "7bddcbe" }

@@ -7,6 +7,7 @@ use ai_smart_maps_core::confidence::{Environment, RouteNovelty};
 use ai_smart_maps_core::contracts::{ModelVersionRecord, TileRecord};
 use ai_smart_maps_core::device::{Device, Trip};
 use ai_smart_maps_core::graph::{Constraint, Edge, Graph, Node, Source};
+use ai_smart_maps_core::reports::Kind;
 use ai_smart_maps_core::snap::Destination;
 use ai_smart_maps_core::tiles::Origin;
 use ai_smart_maps_core::training::TrainingPair;
@@ -203,4 +204,33 @@ fn a_restored_opted_in_device_still_produces_a_delta() {
     );
     let again = upload(&mut restored, &weights).expect("opt-in and pairs travel in the blob");
     assert_eq!(again.delta, first.delta);
+}
+
+#[test]
+fn a_restored_sealed_report_debug_form_has_no_hex() {
+    let mut device = device(1, true);
+    let hex = device.reporter_key().unwrap().hex();
+    device
+        .report(
+            "long",
+            Kind::Hazard,
+            Some("flood"),
+            &Trip {
+                now: "2026-10-05T00:00:00Z",
+                map_age_days: 1.0,
+                report_count: 1,
+                route_novelty: RouteNovelty::Known,
+                environment: Environment::Simple,
+            },
+        )
+        .unwrap();
+    let blob = device.export_all().unwrap();
+
+    let mut restored = Device::open(&[1u8; 32], &[0u8; 32]).unwrap();
+    restored.import_all(&blob).unwrap();
+    let sealed = restored.sealed_reports();
+    assert_eq!(sealed.len(), 1);
+    let shown = format!("{:?}", sealed[0]);
+    assert!(shown.contains("redacted"));
+    assert!(!shown.contains(&hex));
 }

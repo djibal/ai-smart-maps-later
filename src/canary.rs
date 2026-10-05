@@ -12,7 +12,7 @@ pub struct Record {
 
 /// About 1 percent of draws. `draw % 100 == 0` is the candidate bucket.
 pub fn in_bucket(draw: u32) -> bool {
-    draw % 100 == 0
+    draw.is_multiple_of(100)
 }
 
 pub fn assigned_id(previous_id: &str, candidate_id: &str, draw: u32) -> String {

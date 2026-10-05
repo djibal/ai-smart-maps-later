@@ -53,16 +53,16 @@ impl Weights {
     }
 }
 
-struct Layers<'a> {
-    w1: &'a [f32],
-    b1: &'a [f32],
-    w2: &'a [f32],
-    b2: &'a [f32],
-    w3: &'a [f32],
-    b3: f32,
+pub(crate) struct Layers<'a> {
+    pub(crate) w1: &'a [f32],
+    pub(crate) b1: &'a [f32],
+    pub(crate) w2: &'a [f32],
+    pub(crate) b2: &'a [f32],
+    pub(crate) w3: &'a [f32],
+    pub(crate) b3: f32,
 }
 
-fn split(weights: &[f32]) -> Option<Layers<'_>> {
+pub(crate) fn split(weights: &[f32]) -> Option<Layers<'_>> {
     if weights.len() != PARAMETERS {
         return None;
     }

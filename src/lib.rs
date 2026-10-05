@@ -4,6 +4,7 @@
 //! results of this crate.
 
 pub mod aggregation;
+pub mod artifact;
 pub mod canary;
 pub mod local_update;
 pub mod mesh;

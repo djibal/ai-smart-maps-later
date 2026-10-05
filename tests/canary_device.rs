@@ -1,7 +1,7 @@
 //! The canary decides, the core routes. A device in the 1 percent bucket
-//! sees the A1-v5 candidate only when both bars hold; otherwise it keeps
-//! `previous_id`. The means below exercise the gate arithmetic. They are
-//! not a cohort measurement.
+//! sees the encoded `Weights::seeded(0)` candidate only when both bars
+//! hold; otherwise it keeps `previous_id`. The means below exercise the
+//! gate arithmetic. They are not a cohort measurement.
 
 use ai_smart_maps_core::confidence::{Environment, RouteNovelty};
 use ai_smart_maps_core::contracts::{ModelVersionRecord, TileRecord};
@@ -9,17 +9,22 @@ use ai_smart_maps_core::device::{Device, Trip};
 use ai_smart_maps_core::graph::{Constraint, Edge, Graph, Node, Source};
 use ai_smart_maps_core::snap::Destination;
 use ai_smart_maps_core::tiles::Origin;
+use ai_smart_maps_later::artifact::encode_device_scorer;
 use ai_smart_maps_later::canary::{active_id, assigned_id, decide, in_bucket};
+use ai_smart_maps_later::local_update::Weights;
 
 const PREVIOUS: &[u8] = include_bytes!("../fixtures/sum_scorer.onnx");
-const CANDIDATE: &[u8] = include_bytes!("../fixtures/a1v5_device_32x2.onnx");
+const FROZEN_A1V5: &[u8] = include_bytes!("../fixtures/a1v5_device_32x2.onnx");
 const PREVIOUS_ID: &str = "sum-fixture";
-const CANDIDATE_ID: &str = "a1v5-32x2";
+const CANDIDATE_ID: &str = "seeded-0";
 
-/// Agreement of the exported A1-v5 artifact on its 1000-sample test, from
-/// `fixtures/a1v5_device_32x2.json`. The previous and cloud means below are
-/// chosen to sit inside or outside the bars.
+/// Synthetic means that sit inside or outside the bars. Not a measurement
+/// of the encoded weights, and not a live cohort.
 const CANDIDATE_MEAN: f64 = 98.9;
+
+fn candidate() -> Vec<u8> {
+    encode_device_scorer(&Weights::seeded(0)).unwrap()
+}
 
 fn record(id: &str, previous_id: Option<&str>) -> ModelVersionRecord {
     ModelVersionRecord {
@@ -104,17 +109,16 @@ fn roll_out(
         cloud_mean,
     );
     if decision.passed {
-        device.install_scorer(&record(CANDIDATE_ID, Some(PREVIOUS_ID)), CANDIDATE);
+        device.install_scorer(&record(CANDIDATE_ID, Some(PREVIOUS_ID)), &candidate());
     }
     active_id(&decision).to_string()
 }
 
 #[test]
-fn the_candidate_artifact_is_the_exported_a1_v5_model() {
-    assert_eq!(CANDIDATE.len(), 5964);
-    assert!(
-        include_str!("../fixtures/a1v5_device_32x2.json").contains("\"agreement_pct_1000\": 98.9")
-    );
+fn the_candidate_artifact_is_encoded_from_seeded_weights() {
+    let bytes = candidate();
+    assert_eq!(encode_device_scorer(&Weights::seeded(0)).unwrap(), bytes);
+    assert_ne!(bytes.as_slice(), FROZEN_A1V5);
 }
 
 #[test]
@@ -133,7 +137,7 @@ fn a_device_in_the_bucket_routes_on_the_candidate_when_both_bars_hold() {
     let prediction = outcome.prediction.unwrap();
     assert_eq!(prediction.version_id, CANDIDATE_ID);
     assert!(prediction.value.is_finite());
-    assert!(device.budget_used() >= (PREVIOUS.len() + CANDIDATE.len()) as u64);
+    assert!(device.budget_used() >= (PREVIOUS.len() + candidate().len()) as u64);
 }
 
 #[test]

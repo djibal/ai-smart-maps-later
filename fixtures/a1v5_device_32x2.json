@@ -1,0 +1,22 @@
+{
+  "variant": "linear",
+  "torch_seed": 0,
+  "parameters": 1249,
+  "agreement_pct_1000": 98.9,
+  "agreement_pct_200_heldout": 97.5,
+  "cheap": [
+    2.0,
+    5.0,
+    0.2,
+    0.0
+  ],
+  "cheap_score": -0.35585135221481323,
+  "dear": [
+    4.0,
+    30.0,
+    2.5,
+    1.0
+  ],
+  "dear_score": -1.5403000116348267,
+  "onnx_bytes": 5964
+}

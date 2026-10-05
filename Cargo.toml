@@ -6,3 +6,8 @@ publish = false
 description = "Canary, mesh rules, and the network contract. Outside the routing core."
 
 [dependencies]
+
+[dev-dependencies]
+# The core is a test dependency only: the canary decides, the core routes.
+# Pinned to the commit that added the training collector.
+ai-smart-maps-core = { git = "https://github.com/djibal/ai-smart-maps-core", rev = "3eb6b93" }

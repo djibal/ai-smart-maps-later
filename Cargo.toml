@@ -10,4 +10,4 @@ description = "Canary, mesh rules, and the network contract. Outside the routing
 [dev-dependencies]
 # The core is a test dependency only: the canary decides, the core routes.
 # Pinned to the commit that redacts Observation debug.
-ai-smart-maps-core = { git = "https://github.com/djibal/ai-smart-maps-core", rev = "d5913a8" }
+ai-smart-maps-core = { git = "https://github.com/djibal/ai-smart-maps-core", rev = "195642c" }
